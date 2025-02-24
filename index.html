@@ -206,6 +206,7 @@
         <option value="desc">Descending (Green to Red)</option>
       </select>
       <button class="btn btn-primary ms-3 sortBtn" data-tab="construction_&_estate">Sort</button>
+      <button class="btn btn-secondary ms-3 toggleViewBtn" data-tab="construction_&_estate">Toggle Table View</button>
     </div>
     
       <div id="cardsContainer_construction_&_estate" class="row">
@@ -439,6 +440,7 @@
         </div>
         
       </div>
+      <div id="tableContainer_construction_&_estate" style="display:none;"></div>
     </div>
     
     <div class="tab-pane fade" id="university_health_&_safety_management" role="tabpanel" aria-labelledby="university_health_&_safety_management-tab">
@@ -469,6 +471,7 @@
         <option value="desc">Descending (Green to Red)</option>
       </select>
       <button class="btn btn-primary ms-3 sortBtn" data-tab="university_health_&_safety_management">Sort</button>
+      <button class="btn btn-secondary ms-3 toggleViewBtn" data-tab="university_health_&_safety_management">Toggle Table View</button>
     </div>
     
       <div id="cardsContainer_university_health_&_safety_management" class="row">
@@ -588,6 +591,7 @@
         </div>
         
       </div>
+      <div id="tableContainer_university_health_&_safety_management" style="display:none;"></div>
     </div>
     
     <div class="tab-pane fade" id="faculty/professional_services_health_&_safety_management" role="tabpanel" aria-labelledby="faculty/professional_services_health_&_safety_management-tab">
@@ -618,6 +622,7 @@
         <option value="desc">Descending (Green to Red)</option>
       </select>
       <button class="btn btn-primary ms-3 sortBtn" data-tab="faculty/professional_services_health_&_safety_management">Sort</button>
+      <button class="btn btn-secondary ms-3 toggleViewBtn" data-tab="faculty/professional_services_health_&_safety_management">Toggle Table View</button>
     </div>
     
       <div id="cardsContainer_faculty/professional_services_health_&_safety_management" class="row">
@@ -737,6 +742,7 @@
         </div>
         
       </div>
+      <div id="tableContainer_faculty/professional_services_health_&_safety_management" style="display:none;"></div>
     </div>
     
   </div>
@@ -782,6 +788,8 @@
   // Global objects to store chart instances per tab
   const riskCharts = {};
   const complianceCharts = {};
+  // Global object to track view mode per tab ("cards" or "table")
+  const viewMode = {};
 
   // Helper function to return the appropriate badge class
   function getBadgeClass(rating, type) {
@@ -820,7 +828,7 @@
     } else if (r === "red") {
       return "Immediate Risk";
     } else {
-      return "Unknown risk";
+      return "Unknown Risk";
     }
   }
 
@@ -860,6 +868,54 @@
         const details = this.querySelector('.details-section');
         details.style.display = details.style.display === 'block' ? 'none' : 'block';
       });
+    });
+  }
+
+  // Build table view for a given tab into its container.
+  // Build table view for a given tab into its container.
+  function buildTable(tabId, dataArray) {
+    const container = document.getElementById("tableContainer_" + tabId);
+    let html = `<table class="table table-striped table-bordered">
+       <thead>
+          <tr>
+            <th style="width:25%; cursor:pointer;" onclick="sortTableByColumn('faculty/professional_services_health_&_safety_management', 'topic', this)">Title</th>
+            <th style="width:25%; cursor:pointer;" onclick="sortTableByColumn('faculty/professional_services_health_&_safety_management', 'compliance', this)">Compliance Score</th>
+            <th style="width:25%; cursor:pointer;" onclick="sortTableByColumn('faculty/professional_services_health_&_safety_management', 'risk', this)">Risk Score</th>
+            <th style="width:25%; cursor:pointer;" onclick="sortTableByColumn('faculty/professional_services_health_&_safety_management', 'deadline', this)">Deadline to Green</th>
+          </tr>
+       </thead>
+       <tbody>`;
+    dataArray.forEach((item, index) => {
+         html += `<tr class="table-row" data-index="${index}" style="cursor: pointer;">
+            <td>${item.topic}</td>
+            <td>
+              <span class="${getBadgeClass(item.complianceRating, 'compliance')}">
+                ${getComplianceText(item.complianceRating)}
+              </span>
+            </td>
+            <td>
+              <span class="${getBadgeClass(item.residualRisk, 'risk')}">
+                ${getRiskText(item.residualRisk)}
+              </span>
+            </td>
+            <td>
+              <div class="deadline-date">&#x1F4C5; ${item.deadlineToGreen}</div>
+            </td>
+         </tr>
+         <tr class="detail-row" style="display: none;">
+             <td colspan="4">
+                 <strong>Controls/Comments:</strong> ${item.controlsComments}
+             </td>
+         </tr>`;
+    });
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+    // Add event listener to toggle detail rows when a row is clicked.
+    container.querySelectorAll('.table-row').forEach(row => {
+       row.addEventListener('click', function() {
+            const detailRow = this.nextElementSibling;
+            detailRow.style.display = detailRow.style.display === 'table-row' ? 'none' : 'table-row';
+       });
     });
   }
 
@@ -969,13 +1025,21 @@
           duration: 1000,
           easing: 'easeInOutQuart'
         },
-        onClick: function(evt, activeEls, chart) {
-          if (activeEls.length > 0) {
-            const index = activeEls[0].index;
-            const risk = chart.data.labels[index];
-            filterCardsByRisk(tabId, risk);
-          }
-        }
+onClick: function(evt, activeEls, chart) {
+  if (activeEls.length > 0) {
+    const index = activeEls[0].index;
+    const label = chart.data.labels[index];
+    const riskMapping = {
+      'Full Assurance/Low Risk': 'Green',
+      'Partial Assurance/Moderate Risk': 'Amber',
+      'No Assurance/Immediate Risk': 'Red',
+      'Unknown Assurance': 'Unknown'
+    };
+    const risk = riskMapping[label];
+    filterCardsByRisk(tabId, risk);
+  }
+}
+
       }
     });
   }
@@ -1086,13 +1150,21 @@
           duration: 1000,
           easing: 'easeInOutQuart'
         },
-        onClick: function(evt, activeEls, chart) {
-          if (activeEls.length > 0) {
-            const index = activeEls[0].index;
-            const compliance = chart.data.labels[index];
-            filterCardsByCompliance(tabId, compliance);
-          }
-        }
+onClick: function(evt, activeEls, chart) {
+  if (activeEls.length > 0) {
+    const index = activeEls[0].index;
+    const label = chart.data.labels[index];
+    const complianceMapping = {
+      'Full Assurance/Low Risk': 'Green',
+      'Partial Assurance/Moderate Risk': 'Amber',
+      'No Assurance/Immediate Risk': 'Red',
+      'Unknown Assurance': 'Unknown'
+    };
+    const compliance = complianceMapping[label];
+    filterCardsByCompliance(tabId, compliance);
+  }
+}
+
       }
     });
   }
@@ -1101,14 +1173,23 @@
   function filterCardsByRisk(tabId, risk) {
     const allData = dashboardDataByTab[tabId];
     const filtered = allData.filter(item => item.residualRisk === risk);
-    buildCards(tabId, filtered);
+    // Rebuild based on current view mode
+    if(viewMode[tabId] === "table") {
+      buildTable(tabId, filtered);
+    } else {
+      buildCards(tabId, filtered);
+    }
   }
 
   // Filter cards by Compliance
   function filterCardsByCompliance(tabId, compliance) {
     const allData = dashboardDataByTab[tabId];
     const filtered = allData.filter(item => item.complianceRating === compliance);
-    buildCards(tabId, filtered);
+    if(viewMode[tabId] === "table") {
+      buildTable(tabId, filtered);
+    } else {
+      buildCards(tabId, filtered);
+    }
   }
 
   // Sorting order mapping for Compliance
@@ -1135,7 +1216,11 @@
       const bVal = complianceOrder[b.complianceRating.toLowerCase()] || 0;
       return order === "asc" ? aVal - bVal : bVal - aVal;
     });
-    buildCards(tabId, data);
+    if(viewMode[tabId] === "table") {
+      buildTable(tabId, data);
+    } else {
+      buildCards(tabId, data);
+    }
   }
 
   // Sort cards by Residual Risk for a given tab
@@ -1146,12 +1231,69 @@
       const bVal = residualRiskOrder[b.residualRisk.toLowerCase()] || 0;
       return order === "asc" ? aVal - bVal : bVal - aVal;
     });
-    buildCards(tabId, data);
+    if(viewMode[tabId] === "table") {
+      buildTable(tabId, data);
+    } else {
+      buildCards(tabId, data);
+    }
   }
 
-  // Initialize charts, cards, and event listeners for each tab on page load
+ // Function to sort table by column header click. (Defined in global scope)
+function sortTableByColumn(tabId, column, headerElem) {
+  console.log("Sorting table for tab:", tabId, "Column:", column);  // Debug statement
+  let currentOrder = headerElem.getAttribute('data-order') || 'asc';
+  let newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+  headerElem.setAttribute('data-order', newOrder);
+  // Remove data-order attribute from sibling headers.
+  headerElem.parentElement.querySelectorAll('th').forEach(th => {
+     if (th !== headerElem) {
+       th.removeAttribute('data-order');
+     }
+  });
+  
+  // Make a copy of the data array for sorting.
+  let data = dashboardDataByTab[tabId].slice();
+  data.sort((a, b) => {
+     let aVal, bVal;
+     if (column === 'topic') {
+        aVal = a.topic.toLowerCase();
+        bVal = b.topic.toLowerCase();
+     } else if (column === 'compliance') {
+        aVal = a.complianceRating.toLowerCase();
+        bVal = b.complianceRating.toLowerCase();
+     } else if (column === 'risk') {
+        aVal = a.residualRisk.toLowerCase();
+        bVal = b.residualRisk.toLowerCase();
+     } else if (column === 'deadline') {
+        // Helper to parse deadline strings by stripping ordinal suffixes.
+        const parseDeadline = (d) => {
+            let dTrim = d.toLowerCase();
+            if(dTrim === "n/a") return new Date(0);
+            dTrim = dTrim.replace(/(st|nd|rd|th)/g, '');
+            return new Date(dTrim);
+        };
+        aVal = parseDeadline(a.deadlineToGreen);
+        bVal = parseDeadline(b.deadlineToGreen);
+        return newOrder === 'asc' ? aVal - bVal : bVal - aVal;
+     }
+     if(aVal < bVal) return newOrder === 'asc' ? -1 : 1;
+     if(aVal > bVal) return newOrder === 'asc' ? 1 : -1;
+     return 0;
+  });
+  
+  // Optionally update the global data if you want subsequent sorts to use the sorted order:
+  // dashboardDataByTab[tabId] = data;
+  
+  buildTable(tabId, data);
+}
+
+
+
+  // Initialize charts, cards, table view, and event listeners for each tab on page load
   document.addEventListener('DOMContentLoaded', function() {
     for (const tabId in dashboardDataByTab) {
+      // Default view is cards
+      viewMode[tabId] = "cards";
       buildCards(tabId, dashboardDataByTab[tabId]);
       buildRiskChartForTab(tabId, dashboardDataByTab[tabId]);
       buildComplianceChartForTab(tabId, dashboardDataByTab[tabId]);
@@ -1165,6 +1307,25 @@
             sortCardsByCompliance(tabId, order);
           } else {
             sortCardsByResidualRisk(tabId, order);
+          }
+        });
+      });
+
+      // Attach toggle view functionality
+      document.querySelectorAll(`.toggleViewBtn[data-tab="${tabId}"]`).forEach(btn => {
+        btn.addEventListener('click', function() {
+          if(viewMode[tabId] === "cards") {
+            viewMode[tabId] = "table";
+            // Hide cards container, show table container and build table
+            document.getElementById("cardsContainer_" + tabId).style.display = "none";
+            document.getElementById("tableContainer_" + tabId).style.display = "block";
+            buildTable(tabId, dashboardDataByTab[tabId]);
+          } else {
+            viewMode[tabId] = "cards";
+            // Hide table container, show cards container and build cards
+            document.getElementById("tableContainer_" + tabId).style.display = "none";
+            document.getElementById("cardsContainer_" + tabId).style.display = "flex";
+            buildCards(tabId, dashboardDataByTab[tabId]);
           }
         });
       });
