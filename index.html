@@ -18,34 +18,51 @@
       margin: 20px;
       background-color: #f9f9f9;
       font-family: sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
     .badge-custom {
       display: inline-block;
-      padding: 0.4em 0.8em;
-      border-radius: 0.25rem;
-      font-weight: 500;
-      font-size: 0.9em;
-      min-width: 100px;
+      padding: 0.5em 1em;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.85em;
+      min-width: 120px;
       text-align: center;
-      color: #fff;
-      margin-right: 5px;
+      margin: 0.25rem;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .comp-green, .risk-green { background-color: #28a745; }
-    .comp-amber, .risk-amber { background-color: #ffc107; color: #000; }
-    .comp-red, .risk-red { background-color: #dc3545; }
-    .comp-unknown, .risk-unknown { background-color: #6c757d; }
-
+    .comp-green, .risk-green {
+      background-color: #00B894; 
+      color: #fff;
+    }
+    .comp-amber, .risk-amber {
+      background-color: #FDB338;
+      color: #000;
+    }
+    .comp-red, .risk-red {
+      background-color: #FF6B6B;
+      color: #fff;
+    }
+    .comp-unknown, .risk-unknown {
+      background-color: #A8B2C1;
+      color: #fff;
+    }
     .hse-card {
       cursor: pointer;
-      transition: transform 0.2s ease;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
       margin-bottom: 20px;
     }
     .hse-card:hover {
-      transform: scale(1.02);
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
     .card {
       display: flex;
       flex-direction: column;
+      border: none;
     }
     .card-header {
       font-weight: bold;
@@ -54,6 +71,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      background-color: #e9ecef;
     }
     .card-body {
       text-align: center;
@@ -77,12 +95,63 @@
       max-width: 600px;
       margin: 30px auto;
     }
+    /* Chart container styling */
+    .chart-container {
+      height: 400px;
+      width: 100%;
+      max-width: 500px;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin: 10px;
+    }
+    /* New styles for Deadline and Scores */
+    .deadline-date {
+      font-size: 0.9em;
+      background-color: #e7f1ff;
+      color: #084298;
+      padding: 5px 10px;
+      border-radius: 5px;
+      display: inline-block;
+    }
+    .score-badges {
+      margin-bottom: 10px;
+    }
+    /* Dark mode styles */
+    body.dark-mode {
+      background-color: #343a40;
+      color: #f8f9fa;
+    }
+    body.dark-mode .card {
+      background-color: #495057;
+      color: #f8f9fa;
+    }
+    body.dark-mode .card-header {
+      background-color: #6c757d;
+    }
+    body.dark-mode .badge-custom {
+      background-color: #adb5bd;
+      color: #343a40;
+    }
+    body.dark-mode .nav-tabs .nav-link {
+      background-color: #495057;
+      border-color: #6c757d;
+      color: #f8f9fa;
+    }
+    body.dark-mode .nav-tabs .nav-link.active {
+      background-color: #6c757d;
+      border-color: #adb5bd;
+    }
   </style>
 </head>
 <body>
 
 <div class="container-fluid">
-  <h1 class="my-4">Health & Safety Dashboard</h1>
+  <div class="d-flex justify-content-between align-items-center">
+    <h1 class="my-4">University of Nottingham: Health & Safety Dashboard</h1>
+    <!-- Dark Mode Toggle Button -->
+  </div>
 
   <!-- Tabbed interface -->
   <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
@@ -113,12 +182,12 @@
       
     <div class="row my-4">
       <div class="col-md-6 d-flex flex-column align-items-center">
-        <div id="complianceChartContainer_construction_&_estate">
+        <div id="complianceChartContainer_construction_&_estate" class="chart-container">
           <canvas id="complianceChart_construction_&_estate"></canvas>
         </div>
       </div>
       <div class="col-md-6 d-flex flex-column align-items-center">
-        <div id="riskChartContainer_construction_&_estate">
+        <div id="riskChartContainer_construction_&_estate" class="chart-container">
           <canvas id="riskChart_construction_&_estate"></canvas>
         </div>
       </div>
@@ -126,12 +195,17 @@
     
       
     <div class="mb-3 text-center">
-      <button class="btn btn-primary me-2 sortAscBtn" data-tab="construction_&_estate">Sort Compliance: Red to Green</button>
-      <button class="btn btn-primary me-2 sortDescBtn" data-tab="construction_&_estate">Sort Compliance: Green to Red</button>
-    </div>
-    <div class="mb-3 text-center">
-      <button class="btn btn-primary me-2 sortRiskAscBtn" data-tab="construction_&_estate">Sort Residual Risk: Red to Green</button>
-      <button class="btn btn-primary sortRiskDescBtn" data-tab="construction_&_estate">Sort Residual Risk: Green to Red</button>
+      <label for="sortCriteria_construction_&_estate">Sort by:</label>
+      <select id="sortCriteria_construction_&_estate" class="form-select d-inline-block w-auto ms-2">
+        <option value="compliance">Compliance</option>
+        <option value="residualRisk">Residual Risk</option>
+      </select>
+      <label for="sortOrder_construction_&_estate" class="ms-3">Order:</label>
+      <select id="sortOrder_construction_&_estate" class="form-select d-inline-block w-auto ms-2">
+        <option value="asc">Ascending (Red to Green)</option>
+        <option value="desc">Descending (Green to Red)</option>
+      </select>
+      <button class="btn btn-primary ms-3 sortBtn" data-tab="construction_&_estate">Sort</button>
     </div>
     
       <div id="cardsContainer_construction_&_estate" class="row">
@@ -140,9 +214,12 @@
           <div class="card hse-card">
             <div class="card-header">Asbestos management</div>
             <div class="card-body">
-              <span class="badge-custom">Amber</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> 2025-07-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Amber</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st July 2025</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Surveys in place. Re-surveying in place. UoN staff trained to P405.</p>
@@ -156,9 +233,12 @@
           <div class="card hse-card">
             <div class="card-header">Fire Assets</div>
             <div class="card-body">
-              <span class="badge-custom">Amber</span>
-              <span class="badge-custom">Amber</span>
-              <p><strong>Deadline to Green:</strong> 2025-12-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Amber</span>
+                <span class="badge-custom">Amber</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st December 2025</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Testing of E/L & Fire alarms undertaken & recorded. New company engaged to undertake FD surveys.</p>
@@ -172,9 +252,12 @@
           <div class="card hse-card">
             <div class="card-header">Fire Risk Assessments</div>
             <div class="card-body">
-              <span class="badge-custom">Green</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> 2025-08-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Green</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st August 2025</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>BAFE approved contractors appointed and on-site weekly review FRAs. All buildings have an FRA except one that is currently isolated. Some buildings require the assessment reviewing.</p>
@@ -188,9 +271,12 @@
           <div class="card hse-card">
             <div class="card-header">Water Management inc. Legionella</div>
             <div class="card-body">
-              <span class="badge-custom">Green</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> 2025-07-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Green</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st July 2025</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Water Management compliance standard in place; all buildings have a water risk assessment; some require a review which will be undertaken by July. There is a program of water tank cleaning and hot and cold flushing</p>
@@ -204,9 +290,12 @@
           <div class="card hse-card">
             <div class="card-header">Electrical Safety</div>
             <div class="card-body">
-              <span class="badge-custom">Amber</span>
-              <span class="badge-custom">Amber</span>
-              <p><strong>Deadline to Green:</strong> 2025-04-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Amber</span>
+                <span class="badge-custom">Amber</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st April 2025</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Compliance standard in place; EICR undertaken and remedial actions managed. 78% of building have an in date EICR the remainder will be in date by the end of April.</p>
@@ -220,9 +309,12 @@
           <div class="card hse-card">
             <div class="card-header">Gas Safety</div>
             <div class="card-body">
-              <span class="badge-custom">Amber</span>
-              <span class="badge-custom">Amber</span>
-              <p><strong>Deadline to Green:</strong> 2025-04-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Amber</span>
+                <span class="badge-custom">Amber</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st April 2025</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Compliance standard in place. Gas audits undertaken on compressed gases in use in academic areas.  83% of building Gas safety certificates in date with the remainder in date by end of April 25</p>
@@ -236,9 +328,12 @@
           <div class="card hse-card">
             <div class="card-header">Statutory Inspections</div>
             <div class="card-body">
-              <span class="badge-custom">Green</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> Ongoing</p>
+              <div class="score-badges">
+                <span class="badge-custom">Green</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; Ongoing</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Allianz contract now being managed through HSD to ensure plant is available when engineers are on site and also any remedial advisories are actioned. Equipment also has maintenance contracts in place. The wider faculty asset register project being centralised on zeta safe has commenced.</p>
@@ -252,9 +347,12 @@
           <div class="card hse-card">
             <div class="card-header">Building Welfare Provision</div>
             <div class="card-body">
-              <span class="badge-custom">Green</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> N/A</p>
+              <div class="score-badges">
+                <span class="badge-custom">Green</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; N/A</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Buildings have suitably sized rooms, heating, lighting, toilets, drinking water</p>
@@ -268,9 +366,12 @@
           <div class="card hse-card">
             <div class="card-header">Site Transport Safety</div>
             <div class="card-body">
-              <span class="badge-custom">Green</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> 2026-07-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Green</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st July 2026</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Driving at work policy in place; new driver permit system in process of being rolled out; campuses have road markings; site transport assessments are being refreshed.</p>
@@ -284,9 +385,12 @@
           <div class="card hse-card">
             <div class="card-header">Construction Design and Maintenance</div>
             <div class="card-body">
-              <span class="badge-custom">Unknown</span>
-              <span class="badge-custom">Amber</span>
-              <p><strong>Deadline to Green:</strong> N/A</p>
+              <div class="score-badges">
+                <span class="badge-custom">Unknown</span>
+                <span class="badge-custom">Amber</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; N/A</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>CDM policy in place. CDM process in Place; CDM metrics to be developed, no reported incidents</p>
@@ -300,9 +404,12 @@
           <div class="card hse-card">
             <div class="card-header">Control of Contractors</div>
             <div class="card-body">
-              <span class="badge-custom">Amber</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> 2026-07-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Amber</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st July 2026</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Control of Contractors compliance standards in place; Reset system used to ensure contractors are insured have rams and site inductions. The management of reset is managed locally. This needs to be rolled out across the wider university</p>
@@ -316,9 +423,12 @@
           <div class="card hse-card">
             <div class="card-header">Permit to Work Compliance</div>
             <div class="card-body">
-              <span class="badge-custom">Amber</span>
-              <span class="badge-custom">Amber</span>
-              <p><strong>Deadline to Green:</strong> 2026-07-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Amber</span>
+                <span class="badge-custom">Amber</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st July 2026</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Permit to work compliance standards are in place for hot works, confined spaces, work at height, excavations, restricted high-risk areas, asbestos, electrical working. Permits are being developed for isolating fire detection and fire compartmentation working. Estates confined work register is currently being reassessed.</p>
@@ -335,12 +445,12 @@
       
     <div class="row my-4">
       <div class="col-md-6 d-flex flex-column align-items-center">
-        <div id="complianceChartContainer_university_health_&_safety_management">
+        <div id="complianceChartContainer_university_health_&_safety_management" class="chart-container">
           <canvas id="complianceChart_university_health_&_safety_management"></canvas>
         </div>
       </div>
       <div class="col-md-6 d-flex flex-column align-items-center">
-        <div id="riskChartContainer_university_health_&_safety_management">
+        <div id="riskChartContainer_university_health_&_safety_management" class="chart-container">
           <canvas id="riskChart_university_health_&_safety_management"></canvas>
         </div>
       </div>
@@ -348,12 +458,17 @@
     
       
     <div class="mb-3 text-center">
-      <button class="btn btn-primary me-2 sortAscBtn" data-tab="university_health_&_safety_management">Sort Compliance: Red to Green</button>
-      <button class="btn btn-primary me-2 sortDescBtn" data-tab="university_health_&_safety_management">Sort Compliance: Green to Red</button>
-    </div>
-    <div class="mb-3 text-center">
-      <button class="btn btn-primary me-2 sortRiskAscBtn" data-tab="university_health_&_safety_management">Sort Residual Risk: Red to Green</button>
-      <button class="btn btn-primary sortRiskDescBtn" data-tab="university_health_&_safety_management">Sort Residual Risk: Green to Red</button>
+      <label for="sortCriteria_university_health_&_safety_management">Sort by:</label>
+      <select id="sortCriteria_university_health_&_safety_management" class="form-select d-inline-block w-auto ms-2">
+        <option value="compliance">Compliance</option>
+        <option value="residualRisk">Residual Risk</option>
+      </select>
+      <label for="sortOrder_university_health_&_safety_management" class="ms-3">Order:</label>
+      <select id="sortOrder_university_health_&_safety_management" class="form-select d-inline-block w-auto ms-2">
+        <option value="asc">Ascending (Red to Green)</option>
+        <option value="desc">Descending (Green to Red)</option>
+      </select>
+      <button class="btn btn-primary ms-3 sortBtn" data-tab="university_health_&_safety_management">Sort</button>
     </div>
     
       <div id="cardsContainer_university_health_&_safety_management" class="row">
@@ -362,9 +477,12 @@
           <div class="card hse-card">
             <div class="card-header">Health & Safety Policy in place</div>
             <div class="card-body">
-              <span class="badge-custom">Amber</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> N/A</p>
+              <div class="score-badges">
+                <span class="badge-custom">Amber</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; N/A</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Annual Review of University level Health and Safety Policy</p>
@@ -378,9 +496,12 @@
           <div class="card hse-card">
             <div class="card-header">Health & Safety Compliance Standards providing Topic guidance</div>
             <div class="card-body">
-              <span class="badge-custom">Amber</span>
-              <span class="badge-custom">Amber</span>
-              <p><strong>Deadline to Green:</strong> Ongoing program of review</p>
+              <div class="score-badges">
+                <span class="badge-custom">Amber</span>
+                <span class="badge-custom">Amber</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; Ongoing program of review</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>A full suite of topic-based health and safety compliance standards are in place that are reviewed on an ongoing basis and checked legal standards</p>
@@ -394,9 +515,12 @@
           <div class="card hse-card">
             <div class="card-header">Health & Safety Central Training Course</div>
             <div class="card-body">
-              <span class="badge-custom">Green</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> 2025-09-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Green</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st September 2025</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>The current suite of central health and safety courses are in place and delivered. The Health and Safety Committee have agreed the role out of more topic specific training that is required. With the records managed through Unicore</p>
@@ -410,9 +534,12 @@
           <div class="card hse-card">
             <div class="card-header">Health & Safety incident reporting & Investigation</div>
             <div class="card-body">
-              <span class="badge-custom">Green</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> 2026-03-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Green</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st March 2026</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>There is a system for reporting incidents and conducting investigations. The system is old and requires updating.</p>
@@ -426,9 +553,12 @@
           <div class="card hse-card">
             <div class="card-header">Health & Safety Auditing and Safety inspections undertaken</div>
             <div class="card-body">
-              <span class="badge-custom">Amber</span>
-              <span class="badge-custom">Amber</span>
-              <p><strong>Deadline to Green:</strong> 2025-03-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Amber</span>
+                <span class="badge-custom">Amber</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st March 2025</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Audit Program in place and started and the HSD are undertaking spot inspections monthly. The residual risk refers to the potential for when improvements are required.</p>
@@ -442,9 +572,12 @@
           <div class="card hse-card">
             <div class="card-header">Health & Safety Action Implementations – from Fire risk assessment actions; risk assessments; audits; inspections; statutory inspections; investigations; risk management system</div>
             <div class="card-body">
-              <span class="badge-custom">Amber</span>
-              <span class="badge-custom">Amber</span>
-              <p><strong>Deadline to Green:</strong> 2025-09-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Amber</span>
+                <span class="badge-custom">Amber</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st September 2025</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>There is currently no one system for overseeing the implementation of actions. There are several systems that rely on human interaction. Which makes the holistic monitoring difficult. The move forward is to identify a system to act as the one source of truth for monitoring all actions</p>
@@ -461,12 +594,12 @@
       
     <div class="row my-4">
       <div class="col-md-6 d-flex flex-column align-items-center">
-        <div id="complianceChartContainer_faculty/professional_services_health_&_safety_management">
+        <div id="complianceChartContainer_faculty/professional_services_health_&_safety_management" class="chart-container">
           <canvas id="complianceChart_faculty/professional_services_health_&_safety_management"></canvas>
         </div>
       </div>
       <div class="col-md-6 d-flex flex-column align-items-center">
-        <div id="riskChartContainer_faculty/professional_services_health_&_safety_management">
+        <div id="riskChartContainer_faculty/professional_services_health_&_safety_management" class="chart-container">
           <canvas id="riskChart_faculty/professional_services_health_&_safety_management"></canvas>
         </div>
       </div>
@@ -474,12 +607,17 @@
     
       
     <div class="mb-3 text-center">
-      <button class="btn btn-primary me-2 sortAscBtn" data-tab="faculty/professional_services_health_&_safety_management">Sort Compliance: Red to Green</button>
-      <button class="btn btn-primary me-2 sortDescBtn" data-tab="faculty/professional_services_health_&_safety_management">Sort Compliance: Green to Red</button>
-    </div>
-    <div class="mb-3 text-center">
-      <button class="btn btn-primary me-2 sortRiskAscBtn" data-tab="faculty/professional_services_health_&_safety_management">Sort Residual Risk: Red to Green</button>
-      <button class="btn btn-primary sortRiskDescBtn" data-tab="faculty/professional_services_health_&_safety_management">Sort Residual Risk: Green to Red</button>
+      <label for="sortCriteria_faculty/professional_services_health_&_safety_management">Sort by:</label>
+      <select id="sortCriteria_faculty/professional_services_health_&_safety_management" class="form-select d-inline-block w-auto ms-2">
+        <option value="compliance">Compliance</option>
+        <option value="residualRisk">Residual Risk</option>
+      </select>
+      <label for="sortOrder_faculty/professional_services_health_&_safety_management" class="ms-3">Order:</label>
+      <select id="sortOrder_faculty/professional_services_health_&_safety_management" class="form-select d-inline-block w-auto ms-2">
+        <option value="asc">Ascending (Red to Green)</option>
+        <option value="desc">Descending (Green to Red)</option>
+      </select>
+      <button class="btn btn-primary ms-3 sortBtn" data-tab="faculty/professional_services_health_&_safety_management">Sort</button>
     </div>
     
       <div id="cardsContainer_faculty/professional_services_health_&_safety_management" class="row">
@@ -488,9 +626,12 @@
           <div class="card hse-card">
             <div class="card-header">Local Health & Safety Arrangements in place</div>
             <div class="card-body">
-              <span class="badge-custom">Green</span>
-              <span class="badge-custom">Unknown</span>
-              <p><strong>Deadline to Green:</strong> N/A</p>
+              <div class="score-badges">
+                <span class="badge-custom">Green</span>
+                <span class="badge-custom">Unknown</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; N/A</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Health and Safety arrangements are in place and need to be reviewed annually or following an organisational change</p>
@@ -504,9 +645,12 @@
           <div class="card hse-card">
             <div class="card-header">Health & Safety Risk Assessment Registers in Place and up to date</div>
             <div class="card-body">
-              <span class="badge-custom">Amber</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> 2026-08-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Amber</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st August 2026</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Risk Registers are in place in Faculties and Professional Services, the next stage is to ensure the individual assessments have been reviewed and audited to show they meet the legal standard</p>
@@ -520,9 +664,12 @@
           <div class="card hse-card">
             <div class="card-header">Health & Safety Training Matrix in Place and monitored</div>
             <div class="card-body">
-              <span class="badge-custom">Green</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> N/A</p>
+              <div class="score-badges">
+                <span class="badge-custom">Green</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; N/A</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Training matrices in place in Faculty’s and professional Services and managed locally to ensure they are kept up to date. This will be moving to Unicore</p>
@@ -536,9 +683,12 @@
           <div class="card hse-card">
             <div class="card-header">Health & Safety Risk Management System Used to self-assess and manage locally</div>
             <div class="card-body">
-              <span class="badge-custom">Green</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> N/A</p>
+              <div class="score-badges">
+                <span class="badge-custom">Green</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; N/A</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>The Risk Management system continues to be used for faculties and Professional services to conduct a self-assessment and manage any improvements required</p>
@@ -552,9 +702,12 @@
           <div class="card hse-card">
             <div class="card-header">Local Health & Safety Inspections undertaken</div>
             <div class="card-body">
-              <span class="badge-custom">Amber</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> 2026-08-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Amber</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st August 2026</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>The KPI metrics return show that these are undertaken in the majority of the higher risk areas. Where it is not, they have this as an action. This is being built into the zeta safe system</p>
@@ -568,9 +721,12 @@
           <div class="card hse-card">
             <div class="card-header">Occupational Health Exposure Identified and Managed</div>
             <div class="card-body">
-              <span class="badge-custom">Amber</span>
-              <span class="badge-custom">Green</span>
-              <p><strong>Deadline to Green:</strong> 2025-09-01 00:00:00</p>
+              <div class="score-badges">
+                <span class="badge-custom">Amber</span>
+                <span class="badge-custom">Green</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; 1st September 2025</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>Occupational Health exposure is identified locally and referred to the Occupational Health provider. With the upcoming change of provider there is a current campaign and audit process to test whether everyone that requires a referral for an occupational exposure has been referred</p>
@@ -594,20 +750,20 @@
         <table class="table table-bordered">
           <tbody>
             <tr>
-              <th style="background-color: #28a745; color: #fff; width: 100px;">Green</th>
-              <td>Full Assurance / Low Risk — fully evidenced, adequate documentation; low likelihood of a serious incident.</td>
+              <th style="background-color: #28a745; color: #fff; width: 100px;">Full Assurance/Low Risk</th>
+              <td>Fully evidenced, adequate documentation; low likelihood of a serious incident.</td>
             </tr>
             <tr>
-              <th style="background-color: #ffc107; color: #000;">Amber</th>
-              <td>Partial Assurance / Moderate Risk — evidence of some documentation; moderate likelihood of a serious incident.</td>
+              <th style="background-color: #ffc107; color: #000;">Partial Assurance/Moderate Risk</th>
+              <td>Evidence of some documentation; moderate likelihood of a serious incident.</td>
             </tr>
             <tr>
-              <th style="background-color: #dc3545; color: #fff;">Red</th>
-              <td>No Assurance / Immediate Risk — no evidence of controls; high likelihood of a serious incident.</td>
+              <th style="background-color: #dc3545; color: #fff;">No Assurance/Immediate Risk</th>
+              <td>No evidence of controls; high likelihood of a serious incident.</td>
             </tr>
             <tr>
-              <th style="background-color: #6c757d; color: #fff;">Unknown</th>
-              <td>Unknown Assurance / Risk — insufficient information to make a reliable assessment.</td>
+              <th style="background-color: #6c757d; color: #fff;">Unknown Assurance</th>
+              <td>Insufficient information to make a reliable assessment.</td>
             </tr>
           </tbody>
         </table>
@@ -622,7 +778,7 @@
 
 <script>
   // Global dashboard data grouped by tab (generated from Excel)
-  const dashboardDataByTab = {"construction_&_estate": [{"topic": "Asbestos management", "complianceRating": "Amber", "residualRisk": "Green", "deadlineToGreen": "2025-07-01 00:00:00", "controlsComments": "Surveys in place. Re-surveying in place. UoN staff trained to P405."}, {"topic": "Fire Assets", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "2025-12-01 00:00:00", "controlsComments": "Testing of E/L & Fire alarms undertaken & recorded. New company engaged to undertake FD surveys."}, {"topic": "Fire Risk Assessments", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "2025-08-01 00:00:00", "controlsComments": "BAFE approved contractors appointed and on-site weekly review FRAs. All buildings have an FRA except one that is currently isolated. Some buildings require the assessment reviewing."}, {"topic": "Water Management inc. Legionella", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "2025-07-01 00:00:00", "controlsComments": "Water Management compliance standard in place; all buildings have a water risk assessment; some require a review which will be undertaken by July. There is a program of water tank cleaning and hot and cold flushing"}, {"topic": "Electrical Safety", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "2025-04-01 00:00:00", "controlsComments": "Compliance standard in place; EICR undertaken and remedial actions managed. 78% of building have an in date EICR the remainder will be in date by the end of April."}, {"topic": "Gas Safety", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "2025-04-01 00:00:00", "controlsComments": "Compliance standard in place. Gas audits undertaken on compressed gases in use in academic areas.  83% of building Gas safety certificates in date with the remainder in date by end of April 25"}, {"topic": "Statutory Inspections", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "Ongoing", "controlsComments": "Allianz contract now being managed through HSD to ensure plant is available when engineers are on site and also any remedial advisories are actioned. Equipment also has maintenance contracts in place. The wider faculty asset register project being centralised on zeta safe has commenced."}, {"topic": "Building Welfare Provision", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "N/A", "controlsComments": "Buildings have suitably sized rooms, heating, lighting, toilets, drinking water"}, {"topic": "Site Transport Safety", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "2026-07-01 00:00:00", "controlsComments": "Driving at work policy in place; new driver permit system in process of being rolled out; campuses have road markings; site transport assessments are being refreshed."}, {"topic": "Construction Design and Maintenance", "complianceRating": "Unknown", "residualRisk": "Amber", "deadlineToGreen": "N/A", "controlsComments": "CDM policy in place. CDM process in Place; CDM metrics to be developed, no reported incidents"}, {"topic": "Control of Contractors", "complianceRating": "Amber", "residualRisk": "Green", "deadlineToGreen": "2026-07-01 00:00:00", "controlsComments": "Control of Contractors compliance standards in place; Reset system used to ensure contractors are insured have rams and site inductions. The management of reset is managed locally. This needs to be rolled out across the wider university"}, {"topic": "Permit to Work Compliance", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "2026-07-01 00:00:00", "controlsComments": "Permit to work compliance standards are in place for hot works, confined spaces, work at height, excavations, restricted high-risk areas, asbestos, electrical working. Permits are being developed for isolating fire detection and fire compartmentation working. Estates confined work register is currently being reassessed."}], "university_health_&_safety_management": [{"topic": "Health & Safety Policy in place", "complianceRating": "Amber", "residualRisk": "Green", "deadlineToGreen": "N/A", "controlsComments": "Annual Review of University level Health and Safety Policy"}, {"topic": "Health & Safety Compliance Standards providing Topic guidance", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "Ongoing program of review", "controlsComments": "A full suite of topic-based health and safety compliance standards are in place that are reviewed on an ongoing basis and checked legal standards"}, {"topic": "Health & Safety Central Training Course", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "2025-09-01 00:00:00", "controlsComments": "The current suite of central health and safety courses are in place and delivered. The Health and Safety Committee have agreed the role out of more topic specific training that is required. With the records managed through Unicore"}, {"topic": "Health & Safety incident reporting & Investigation", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "2026-03-01 00:00:00", "controlsComments": "There is a system for reporting incidents and conducting investigations. The system is old and requires updating."}, {"topic": "Health & Safety Auditing and Safety inspections undertaken", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "2025-03-01 00:00:00", "controlsComments": "Audit Program in place and started and the HSD are undertaking spot inspections monthly. The residual risk refers to the potential for when improvements are required."}, {"topic": "Health & Safety Action Implementations \u2013 from Fire risk assessment actions; risk assessments; audits; inspections; statutory inspections; investigations; risk management system", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "2025-09-01 00:00:00", "controlsComments": "There is currently no one system for overseeing the implementation of actions. There are several systems that rely on human interaction. Which makes the holistic monitoring difficult. The move forward is to identify a system to act as the one source of truth for monitoring all actions"}], "faculty/professional_services_health_&_safety_management": [{"topic": "Local Health & Safety Arrangements in place", "complianceRating": "Green", "residualRisk": "Unknown", "deadlineToGreen": "N/A", "controlsComments": "Health and Safety arrangements are in place and need to be reviewed annually or following an organisational change"}, {"topic": "Health & Safety Risk Assessment Registers in Place and up to date", "complianceRating": "Amber", "residualRisk": "Green", "deadlineToGreen": "2026-08-01 00:00:00", "controlsComments": "Risk Registers are in place in Faculties and Professional Services, the next stage is to ensure the individual assessments have been reviewed and audited to show they meet the legal standard"}, {"topic": "Health & Safety Training Matrix in Place and monitored", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "N/A", "controlsComments": "Training matrices in place in Faculty\u2019s and professional Services and managed locally to ensure they are kept up to date. This will be moving to Unicore"}, {"topic": "Health & Safety Risk Management System Used to self-assess and manage locally", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "N/A", "controlsComments": "The Risk Management system continues to be used for faculties and Professional services to conduct a self-assessment and manage any improvements required"}, {"topic": "Local Health & Safety Inspections undertaken", "complianceRating": "Amber", "residualRisk": "Green", "deadlineToGreen": "2026-08-01 00:00:00", "controlsComments": "The KPI metrics return show that these are undertaken in the majority of the higher risk areas. Where it is not, they have this as an action. This is being built into the zeta safe system"}, {"topic": "Occupational Health Exposure Identified and Managed", "complianceRating": "Amber", "residualRisk": "Green", "deadlineToGreen": "2025-09-01 00:00:00", "controlsComments": "Occupational Health exposure is identified locally and referred to the Occupational Health provider. With the upcoming change of provider there is a current campaign and audit process to test whether everyone that requires a referral for an occupational exposure has been referred"}]};
+  const dashboardDataByTab = {"construction_&_estate": [{"topic": "Asbestos management", "complianceRating": "Amber", "residualRisk": "Green", "deadlineToGreen": "1st July 2025", "controlsComments": "Surveys in place. Re-surveying in place. UoN staff trained to P405."}, {"topic": "Fire Assets", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "1st December 2025", "controlsComments": "Testing of E/L & Fire alarms undertaken & recorded. New company engaged to undertake FD surveys."}, {"topic": "Fire Risk Assessments", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "1st August 2025", "controlsComments": "BAFE approved contractors appointed and on-site weekly review FRAs. All buildings have an FRA except one that is currently isolated. Some buildings require the assessment reviewing."}, {"topic": "Water Management inc. Legionella", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "1st July 2025", "controlsComments": "Water Management compliance standard in place; all buildings have a water risk assessment; some require a review which will be undertaken by July. There is a program of water tank cleaning and hot and cold flushing"}, {"topic": "Electrical Safety", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "1st April 2025", "controlsComments": "Compliance standard in place; EICR undertaken and remedial actions managed. 78% of building have an in date EICR the remainder will be in date by the end of April."}, {"topic": "Gas Safety", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "1st April 2025", "controlsComments": "Compliance standard in place. Gas audits undertaken on compressed gases in use in academic areas.  83% of building Gas safety certificates in date with the remainder in date by end of April 25"}, {"topic": "Statutory Inspections", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "Ongoing", "controlsComments": "Allianz contract now being managed through HSD to ensure plant is available when engineers are on site and also any remedial advisories are actioned. Equipment also has maintenance contracts in place. The wider faculty asset register project being centralised on zeta safe has commenced."}, {"topic": "Building Welfare Provision", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "N/A", "controlsComments": "Buildings have suitably sized rooms, heating, lighting, toilets, drinking water"}, {"topic": "Site Transport Safety", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "1st July 2026", "controlsComments": "Driving at work policy in place; new driver permit system in process of being rolled out; campuses have road markings; site transport assessments are being refreshed."}, {"topic": "Construction Design and Maintenance", "complianceRating": "Unknown", "residualRisk": "Amber", "deadlineToGreen": "N/A", "controlsComments": "CDM policy in place. CDM process in Place; CDM metrics to be developed, no reported incidents"}, {"topic": "Control of Contractors", "complianceRating": "Amber", "residualRisk": "Green", "deadlineToGreen": "1st July 2026", "controlsComments": "Control of Contractors compliance standards in place; Reset system used to ensure contractors are insured have rams and site inductions. The management of reset is managed locally. This needs to be rolled out across the wider university"}, {"topic": "Permit to Work Compliance", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "1st July 2026", "controlsComments": "Permit to work compliance standards are in place for hot works, confined spaces, work at height, excavations, restricted high-risk areas, asbestos, electrical working. Permits are being developed for isolating fire detection and fire compartmentation working. Estates confined work register is currently being reassessed."}], "university_health_&_safety_management": [{"topic": "Health & Safety Policy in place", "complianceRating": "Amber", "residualRisk": "Green", "deadlineToGreen": "N/A", "controlsComments": "Annual Review of University level Health and Safety Policy"}, {"topic": "Health & Safety Compliance Standards providing Topic guidance", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "Ongoing program of review", "controlsComments": "A full suite of topic-based health and safety compliance standards are in place that are reviewed on an ongoing basis and checked legal standards"}, {"topic": "Health & Safety Central Training Course", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "1st September 2025", "controlsComments": "The current suite of central health and safety courses are in place and delivered. The Health and Safety Committee have agreed the role out of more topic specific training that is required. With the records managed through Unicore"}, {"topic": "Health & Safety incident reporting & Investigation", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "1st March 2026", "controlsComments": "There is a system for reporting incidents and conducting investigations. The system is old and requires updating."}, {"topic": "Health & Safety Auditing and Safety inspections undertaken", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "1st March 2025", "controlsComments": "Audit Program in place and started and the HSD are undertaking spot inspections monthly. The residual risk refers to the potential for when improvements are required."}, {"topic": "Health & Safety Action Implementations \u2013 from Fire risk assessment actions; risk assessments; audits; inspections; statutory inspections; investigations; risk management system", "complianceRating": "Amber", "residualRisk": "Amber", "deadlineToGreen": "1st September 2025", "controlsComments": "There is currently no one system for overseeing the implementation of actions. There are several systems that rely on human interaction. Which makes the holistic monitoring difficult. The move forward is to identify a system to act as the one source of truth for monitoring all actions"}], "faculty/professional_services_health_&_safety_management": [{"topic": "Local Health & Safety Arrangements in place", "complianceRating": "Green", "residualRisk": "Unknown", "deadlineToGreen": "N/A", "controlsComments": "Health and Safety arrangements are in place and need to be reviewed annually or following an organisational change"}, {"topic": "Health & Safety Risk Assessment Registers in Place and up to date", "complianceRating": "Amber", "residualRisk": "Green", "deadlineToGreen": "1st August 2026", "controlsComments": "Risk Registers are in place in Faculties and Professional Services, the next stage is to ensure the individual assessments have been reviewed and audited to show they meet the legal standard"}, {"topic": "Health & Safety Training Matrix in Place and monitored", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "N/A", "controlsComments": "Training matrices in place in Faculty\u2019s and professional Services and managed locally to ensure they are kept up to date. This will be moving to Unicore"}, {"topic": "Health & Safety Risk Management System Used to self-assess and manage locally", "complianceRating": "Green", "residualRisk": "Green", "deadlineToGreen": "N/A", "controlsComments": "The Risk Management system continues to be used for faculties and Professional services to conduct a self-assessment and manage any improvements required"}, {"topic": "Local Health & Safety Inspections undertaken", "complianceRating": "Amber", "residualRisk": "Green", "deadlineToGreen": "1st August 2026", "controlsComments": "The KPI metrics return show that these are undertaken in the majority of the higher risk areas. Where it is not, they have this as an action. This is being built into the zeta safe system"}, {"topic": "Occupational Health Exposure Identified and Managed", "complianceRating": "Amber", "residualRisk": "Green", "deadlineToGreen": "1st September 2025", "controlsComments": "Occupational Health exposure is identified locally and referred to the Occupational Health provider. With the upcoming change of provider there is a current campaign and audit process to test whether everyone that requires a referral for an occupational exposure has been referred"}]};
   // Global objects to store chart instances per tab
   const riskCharts = {};
   const complianceCharts = {};
@@ -641,6 +797,33 @@
     }
   }
 
+  // New helper functions for text labels
+  function getComplianceText(rating) {
+    let r = rating.toLowerCase();
+    if (r === "green") {
+      return "Full Compliance";
+    } else if (r === "amber") {
+      return "Partial Compliance";
+    } else if (r === "red") {
+      return "No Compliance";
+    } else {
+      return "Unknown Compliance";
+    }
+  }
+
+  function getRiskText(rating) {
+    let r = rating.toLowerCase();
+    if (r === "green") {
+      return "Low Risk";
+    } else if (r === "amber") {
+      return "Moderate Risk";
+    } else if (r === "red") {
+      return "Immediate Risk";
+    } else {
+      return "Unknown risk";
+    }
+  }
+
   // Build cards for a given tab into its container
   function buildCards(tabId, dataArray) {
     const container = document.getElementById("cardsContainer_" + tabId);
@@ -653,9 +836,12 @@
           <div class="card hse-card">
             <div class="card-header">${item.topic}</div>
             <div class="card-body">
-              <span class="${compClass}">Compliance</span>
-              <span class="${riskClass}">Residual Risk</span>
-              <p><strong>Deadline to Green:</strong> ${item.deadlineToGreen}</p>
+              <div class="score-badges">
+                <span class="${compClass}">${getComplianceText(item.complianceRating)}</span>
+                <span class="${riskClass}">${getRiskText(item.residualRisk)}</span>
+              </div>
+              <p class="mb-1"><strong>Deadline to Green:</strong></p>
+              <div class="deadline-date">&#x1F4C5; ${item.deadlineToGreen}</div>
               <div class="details-section" style="display:none;">
                 <hr>
                 <p><strong>Controls/Comments:</strong><br>${item.controlsComments}</p>
@@ -677,7 +863,7 @@
     });
   }
 
-  // Build the Residual Risk pie chart for a given tab
+  // Build the Residual Risk pie chart for a given tab with updated labels
   function buildRiskChartForTab(tabId, dataArray) {
     const canvasId = 'riskChart_' + tabId;
     const canvasElem = document.getElementById(canvasId);
@@ -688,29 +874,100 @@
       riskCharts[tabId].destroy();
     }
 
-    const riskCounts = { Green: 0, Amber: 0, Red: 0, Unknown: 0 };
+    const riskCounts = { "Green": 0, "Amber": 0, "Red": 0, "Unknown": 0 };
     dataArray.forEach(item => {
       const r = item.residualRisk;
       if (riskCounts.hasOwnProperty(r)) {
         riskCounts[r]++;
       } else {
-        riskCounts.Unknown++;
+        riskCounts["Unknown"]++;
       }
     });
+
     riskCharts[tabId] = new Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: ['Green', 'Amber', 'Red', 'Unknown'],
-        datasets: [{
-          data: [riskCounts.Green, riskCounts.Amber, riskCounts.Red, riskCounts.Unknown],
-          backgroundColor: ['#28a745', '#ffc107', '#dc3545', '#6c757d']
-        }]
+        labels: ['Full Assurance/Low Risk', 'Partial Assurance/Moderate Risk', 'No Assurance/Immediate Risk', 'Unknown Assurance'],
+        datasets: [ {
+          data: [riskCounts["Green"], riskCounts["Amber"], riskCounts["Red"], riskCounts["Unknown"]],
+          backgroundColor: [
+            'rgba(40, 167, 69, 0.8)',
+            'rgba(255, 193, 7, 0.8)',
+            'rgba(220, 53, 69, 0.8)',
+            'rgba(108, 117, 125, 0.8)'
+          ],
+          borderColor: [
+            'rgb(40, 167, 69)',
+            'rgb(255, 193, 7)',
+            'rgb(220, 53, 69)',
+            'rgb(108, 117, 125)'
+          ],
+          borderWidth: 2,
+          hoverBorderWidth: 3,
+          hoverBorderColor: [
+            'rgb(25, 135, 84)',
+            'rgb(225, 163, 0)',
+            'rgb(190, 33, 49)',
+            'rgb(88, 97, 105)'
+          ],
+          hoverOffset: 10
+        } ]
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
         plugins: {
-          legend: { position: 'bottom' },
-          title: { display: true, text: 'Residual Risk Distribution' }
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              font: {
+                size: 12,
+                family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+              }
+            }
+          },
+          title: {
+            display: true,
+            text: 'Residual Risk Distribution',
+            font: {
+              size: 16,
+              weight: 'bold',
+              family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+            },
+            padding: {
+              top: 10,
+              bottom: 30
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.raw || 0;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: ${value} (${percentage}%)`;
+              }
+            },
+            padding: 12,
+            bodyFont: {
+              size: 14
+            },
+            titleFont: {
+              size: 14,
+              weight: 'bold'
+            }
+          }
+        },
+        animation: {
+          animateScale: true,
+          animateRotate: true,
+          duration: 1000,
+          easing: 'easeInOutQuart'
         },
         onClick: function(evt, activeEls, chart) {
           if (activeEls.length > 0) {
@@ -723,7 +980,7 @@
     });
   }
 
-  // Build the Compliance pie chart for a given tab
+  // Build the Compliance pie chart for a given tab with updated labels
   function buildComplianceChartForTab(tabId, dataArray) {
     const canvasId = 'complianceChart_' + tabId;
     const canvasElem = document.getElementById(canvasId);
@@ -734,29 +991,100 @@
       complianceCharts[tabId].destroy();
     }
 
-    const complianceCounts = { Green: 0, Amber: 0, Red: 0, Unknown: 0 };
+    const complianceCounts = { "Green": 0, "Amber": 0, "Red": 0, "Unknown": 0 };
     dataArray.forEach(item => {
       const c = item.complianceRating;
       if (complianceCounts.hasOwnProperty(c)) {
         complianceCounts[c]++;
       } else {
-        complianceCounts.Unknown++;
+        complianceCounts["Unknown"]++;
       }
     });
+
     complianceCharts[tabId] = new Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: ['Green', 'Amber', 'Red', 'Unknown'],
-        datasets: [{
-          data: [complianceCounts.Green, complianceCounts.Amber, complianceCounts.Red, complianceCounts.Unknown],
-          backgroundColor: ['#28a745', '#ffc107', '#dc3545', '#6c757d']
-        }]
+        labels: ['Full Assurance/Low Risk', 'Partial Assurance/Moderate Risk', 'No Assurance/Immediate Risk', 'Unknown Assurance'],
+        datasets: [ {
+          data: [complianceCounts["Green"], complianceCounts["Amber"], complianceCounts["Red"], complianceCounts["Unknown"]],
+          backgroundColor: [
+            'rgba(40, 167, 69, 0.8)',
+            'rgba(255, 193, 7, 0.8)',
+            'rgba(220, 53, 69, 0.8)',
+            'rgba(108, 117, 125, 0.8)'
+          ],
+          borderColor: [
+            'rgb(40, 167, 69)',
+            'rgb(255, 193, 7)',
+            'rgb(220, 53, 69)',
+            'rgb(108, 117, 125)'
+          ],
+          borderWidth: 2,
+          hoverBorderWidth: 3,
+          hoverBorderColor: [
+            'rgb(25, 135, 84)',
+            'rgb(225, 163, 0)',
+            'rgb(190, 33, 49)',
+            'rgb(88, 97, 105)'
+          ],
+          hoverOffset: 10
+        } ]
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
         plugins: {
-          legend: { position: 'bottom' },
-          title: { display: true, text: 'Compliance Distribution' }
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              font: {
+                size: 12,
+                family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+              }
+            }
+          },
+          title: {
+            display: true,
+            text: 'Compliance Distribution',
+            font: {
+              size: 16,
+              weight: 'bold',
+              family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+            },
+            padding: {
+              top: 10,
+              bottom: 30
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.raw || 0;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: ${value} (${percentage}%)`;
+              }
+            },
+            padding: 12,
+            bodyFont: {
+              size: 14
+            },
+            titleFont: {
+              size: 14,
+              weight: 'bold'
+            }
+          }
+        },
+        animation: {
+          animateScale: true,
+          animateRotate: true,
+          duration: 1000,
+          easing: 'easeInOutQuart'
         },
         onClick: function(evt, activeEls, chart) {
           if (activeEls.length > 0) {
@@ -783,11 +1111,6 @@
     buildCards(tabId, filtered);
   }
 
-  // Reset the filter for a given tab (show all cards)
-  function resetFilter(tabId) {
-    buildCards(tabId, dashboardDataByTab[tabId]);
-  }
-
   // Sorting order mapping for Compliance
   const complianceOrder = {
     "unknown": 1,
@@ -796,7 +1119,7 @@
     "green": 4
   };
 
-  // Sorting order mapping for Residual Risk (can be adjusted as needed)
+  // Sorting order mapping for Residual Risk
   const residualRiskOrder = {
     "unknown": 1,
     "red": 2,
@@ -833,29 +1156,16 @@
       buildRiskChartForTab(tabId, dashboardDataByTab[tabId]);
       buildComplianceChartForTab(tabId, dashboardDataByTab[tabId]);
 
-      document.querySelectorAll(`.resetFilterBtn[data-tab="${tabId}"]`).forEach(btn => {
+      // Attach sort functionality using the new sort panel
+      document.querySelectorAll(`.sortBtn[data-tab="${tabId}"]`).forEach(btn => {
         btn.addEventListener('click', function() {
-          resetFilter(tabId);
-        });
-      });
-      document.querySelectorAll(`.sortAscBtn[data-tab="${tabId}"]`).forEach(btn => {
-        btn.addEventListener('click', function() {
-          sortCardsByCompliance(tabId, "asc");
-        });
-      });
-      document.querySelectorAll(`.sortDescBtn[data-tab="${tabId}"]`).forEach(btn => {
-        btn.addEventListener('click', function() {
-          sortCardsByCompliance(tabId, "desc");
-        });
-      });
-      document.querySelectorAll(`.sortRiskAscBtn[data-tab="${tabId}"]`).forEach(btn => {
-        btn.addEventListener('click', function() {
-          sortCardsByResidualRisk(tabId, "asc");
-        });
-      });
-      document.querySelectorAll(`.sortRiskDescBtn[data-tab="${tabId}"]`).forEach(btn => {
-        btn.addEventListener('click', function() {
-          sortCardsByResidualRisk(tabId, "desc");
+          const criteria = document.getElementById(`sortCriteria_${tabId}`).value;
+          const order = document.getElementById(`sortOrder_${tabId}`).value;
+          if(criteria === 'compliance') {
+            sortCardsByCompliance(tabId, order);
+          } else {
+            sortCardsByResidualRisk(tabId, order);
+          }
         });
       });
     }
@@ -871,6 +1181,11 @@
         }, 100);
       });
     });
+  });
+
+  // Dark mode toggle functionality
+  document.getElementById('darkModeToggle').addEventListener('click', function() {
+    document.body.classList.toggle('dark-mode');
   });
 </script>
 
