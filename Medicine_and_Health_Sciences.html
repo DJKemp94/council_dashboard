@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medicine and Health Sciences Faculty KPI Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.1.0/chartjs-plugin-annotation.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+    body {
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .dashboard {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .donut-chart-container {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+    .donut-chart-container canvas {
+      max-width: 400px;
+      max-height: 300px;
+    }
+    .sort-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .sort-controls button {
+      padding: 8px 16px;
+      border: none;
+      background-color: #4F46E5;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .sort-controls button:hover {
+      background-color: #3b38c2;
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .table-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .kpi-card {
+      position: relative;
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      padding-top: 30px; /* extra top padding to make room for the badge */
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border: 1px solid #eee;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+  .impact-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    text-align: center;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 2;
+    color: white;
+  }
+  .impact-high {
+    background-color: #DC2626;
+  }
+  .impact-medium {
+    background-color: #FACC15;
+    color: black;
+  }
+  .impact-low {
+    background-color: #16A34A;
+  }
+  .modal-impact-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    margin-left: 10px;
+    vertical-align: middle;
+    color: white;
+  }
+  .modal-impact-high {
+    background-color: #DC2626;
+  }
+  .modal-impact-medium {
+    background-color: #FACC15;
+    color: black;
+  }
+  .modal-impact-low {
+    background-color: #16A34A;
+  }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+    .modal-content {
+      position: relative;
+      background: white;
+      margin: 50px auto;
+      padding: 20px;
+      width: 90%;
+      max-width: 800px;
+      border-radius: 8px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .close-btn {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      font-size: 24px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      transition: color 0.2s ease;
+    }
+    .close-btn:hover {
+      color: #DC2626;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    .status-on-track { background: #dcfce7; color: #166534; }
+    .status-needs-improving { background: #fef9c3; color: #854d0e; }
+    .status-at-risk { background: #fee2e2; color: #991b1b; }
+    .chart-container {
+      margin-top: 20px;
+      margin-bottom: 40px;
+      height: 300px;
+    }
+    .department-breakdown {
+      margin-top: 20px;
+      border-top: 1px solid #eee;
+      padding-top: 20px;
+      clear: both;
+    }
+    .progress-bar {
+      height: 8px;
+      background: #eee;
+      border-radius: 4px;
+      margin-top: 5px;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    .kpi-average {
+      font-weight: bold;
+      color: #4F46E5;
+    }
+    .kpi-target {
+      font-weight: bold;
+    }
+    .impact-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+.legend-badge {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-right: 3px;
+  color: white;
+}
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <div class="header">
+      <h1>Medicine and Health Sciences Faculty KPI Dashboard</h1>
+      <div class="date">Last Updated: February 23, 2025</div>
+    </div>
+
+    <div class="donut-chart-container">
+      <canvas id="status-donut-chart"></canvas>
+      <canvas id="score-bar-chart"></canvas>
+    </div>
+
+    <div class="sort-controls">
+      <button id="sort-alpha">Sort Alphabetically</button>
+      <button id="sort-score">Sort by Score</button>
+      <button id="toggle-view">Table View</button>
+    </div>
+
+      <div class="impact-legend">
+    <span style="margin-right: 15px; font-size: 14px; color: #555;">Priority Impact:</span>
+    <span class="legend-badge impact-high">H</span>
+    <span style="margin: 0 5px;">High</span>
+    <span class="legend-badge impact-medium">M</span>
+    <span style="margin: 0 5px;">Medium</span>
+    <span class="legend-badge impact-low">L</span>
+    <span>Low</span>
+  </div>
+    
+    <p style="text-align: center; margin-bottom: 10px; font-size: 16px; color: #555;">
+      Click to view KPI returns in more detail
+    </p>
+
+    <div id="kpi-grid" class="grid-container"></div>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <script>
+  // Helper: Map impact string to more descriptive symbol/text.
+  function getImpactSymbol(impact) {
+    const imp = impact.toLowerCase();
+    if (imp === 'high') return 'H';
+    if (imp === 'medium') return 'M';
+    if (imp === 'low') return 'L';
+    return '';
+  }
+
+    // Global variable for current view mode: "cards" or "table"
+    let currentView = 'cards';
+
+    // Overall university average passed from Python
+    const overallUniversityAverage = 83.0;
+
+    // Get all unique departments from the KPI data dynamically.
+    const kpiData = {"BU Arrangements": {"values": {"Life Sciences": 100, "Vet School": 100, "Health Sciences": 100, "Medicine": 100, "BDI": 100, "Clinical Skills": 100}, "target": 100, "status": "On Track", "description": NaN, "comments": NaN, "university_average": 89.5, "impact": "Low"}, "BU Owned Assets": {"values": {"Life Sciences": 98, "Vet School": 100, "Health Sciences": "N/A", "Medicine": 97, "BDI": 100, "Clinical Skills": 100}, "target": 100, "status": "On Track", "description": NaN, "comments": NaN, "university_average": 80.5, "impact": "Medium"}, "External Audits & Inspections": {"values": {"Life Sciences": "N/A", "Vet School": 100, "Health Sciences": "N/A", "Medicine": "N/A", "BDI": 100, "Clinical Skills": "N/A"}, "target": 100, "status": "On Track", "description": NaN, "comments": NaN, "university_average": 83.3, "impact": "Medium"}, "F1 Form Submitted": {"values": {"Life Sciences": 100, "Vet School": 100, "Health Sciences": 100, "Medicine": 100, "BDI": 100, "Clinical Skills": 100}, "target": 100, "status": "On Track", "description": NaN, "comments": NaN, "university_average": 98.4, "impact": "Low"}, "Fire Drills": {"values": {"Life Sciences": 100, "Vet School": 100, "Health Sciences": 100, "Medicine": 100, "BDI": 100, "Clinical Skills": 100}, "target": 100, "status": "On Track", "description": NaN, "comments": NaN, "university_average": 95.9, "impact": "Medium"}, "Fire Safety Training": {"values": {"Life Sciences": 60, "Vet School": "N/A", "Health Sciences": 95, "Medicine": 90, "BDI": 86, "Clinical Skills": 100}, "target": 100, "status": "Needs Improving", "description": NaN, "comments": NaN, "university_average": 78.6, "impact": "Medium"}, "H&S Committees & Meetings": {"values": {"Life Sciences": 100, "Vet School": 100, "Health Sciences": 100, "Medicine": 100, "BDI": 100, "Clinical Skills": 100}, "target": 100, "status": "On Track", "description": NaN, "comments": NaN, "university_average": 100.0, "impact": "Low"}, "H&S Training Matrix": {"values": {"Life Sciences": 100, "Vet School": 100, "Health Sciences": 100, "Medicine": 75, "BDI": 100, "Clinical Skills": 100}, "target": 100, "status": "On Track", "description": NaN, "comments": NaN, "university_average": 81.6, "impact": "Medium"}, "Incidents & Investigations": {"values": {"Life Sciences": 87, "Vet School": 39, "Health Sciences": 84, "Medicine": 100, "BDI": 87, "Clinical Skills": 80}, "target": 100, "status": "Needs Improving", "description": NaN, "comments": NaN, "university_average": 81.9, "impact": "High"}, "Induction Training": {"values": {"Life Sciences": 46, "Vet School": "N/A", "Health Sciences": 95, "Medicine": 89, "BDI": 68, "Clinical Skills": 100}, "target": 100, "status": "Needs Improving", "description": NaN, "comments": NaN, "university_average": 73.9, "impact": "Medium"}, "Leadership Walk Arounds": {"values": {"Life Sciences": 100, "Vet School": 100, "Health Sciences": 0, "Medicine": 100, "BDI": 0, "Clinical Skills": 50}, "target": 100, "status": "At Risk", "description": NaN, "comments": NaN, "university_average": 63.9, "impact": "Low"}, "Monitoring Schedule": {"values": {"Life Sciences": 100, "Vet School": 75, "Health Sciences": 100, "Medicine": 75, "BDI": 100, "Clinical Skills": 75}, "target": 100, "status": "Needs Improving", "description": NaN, "comments": NaN, "university_average": 84.5, "impact": "High"}, "PEEPs in Place": {"values": {"Life Sciences": 100, "Vet School": 100, "Health Sciences": 100, "Medicine": 100, "BDI": "N/A", "Clinical Skills": 100}, "target": 100, "status": "On Track", "description": NaN, "comments": NaN, "university_average": 100.0, "impact": "Medium"}, "Risk Assessment Register": {"values": {"Life Sciences": 96, "Vet School": 32, "Health Sciences": 100, "Medicine": 74, "BDI": "N/A", "Clinical Skills": 82}, "target": 100, "status": "At Risk", "description": NaN, "comments": NaN, "university_average": 59.1, "impact": "Low"}, "RMS": {"values": {"Life Sciences": 100, "Vet School": 100, "Health Sciences": 100, "Medicine": 100, "BDI": 100, "Clinical Skills": 100}, "target": 100, "status": "On Track", "description": NaN, "comments": NaN, "university_average": 86.8, "impact": "Medium"}};
+    const departmentSet = new Set();
+    Object.values(kpiData).forEach(kpi => {
+      Object.keys(kpi.values).forEach(dept => departmentSet.add(dept));
+    });
+    const departments = Array.from(departmentSet);
+
+    function calculateAverage(values) {
+      const validValues = Object.values(values).filter(v => !isNaN(v) && v !== "N/A" && v !== "No Return" && v !== "No Returns");
+      return validValues.length ? (validValues.reduce((a, b) => a + b, 0) / validValues.length).toFixed(1) : 'N/A';
+    }
+
+    function getStatusClass(status) {
+      if (!status) return '';
+      return {
+        'on track': 'status-on-track',
+        'needs improving': 'status-needs-improving',
+        'at risk': 'status-at-risk'
+      }[status.toLowerCase()] || '';
+    }
+
+    // Returns an indicator for faculty average vs. target.
+    function getComparisonIndicator(avg, target) {
+      if (avg === 'N/A' || target === 'N/A') return '';
+      const avgVal = parseFloat(avg);
+      const targetVal = parseFloat(target);
+      if (avgVal > targetVal) {
+        return 'T: <span style="color: #16A34A; margin-right: 8px;" title="Exceeds Target">&#x2191;</span>';
+      } else if (avgVal < targetVal) {
+        return 'T: <span style="color: #DC2626; margin-right: 8px;" title="Below Target">&#x2193;</span>';
+      } else {
+        return 'T: <span style="color: #1D4ED8; margin-right: 8px;" title="Meets Target">&#x2713;</span>';
+      }
+    }
+
+    // Returns an indicator for faculty average vs. university average.
+    function getUniComparisonIndicator(avg, uniAvg) {
+      if (avg === 'N/A' || uniAvg === 'N/A') return '';
+      const avgVal = parseFloat(avg);
+      const uniVal = parseFloat(uniAvg);
+      if (avgVal > uniVal) {
+        return 'UA: <span style="color: #16A34A; margin-right: 8px;" title="Exceeds University Average">&#x2191;</span>';
+      } else if (avgVal < uniVal) {
+        return 'UA: <span style="color: #DC2626; margin-right: 8px;" title="Below University Average">&#x2193;</span>';
+      } else {
+        return 'UA: <span style="color: #1D4ED8; margin-right: 8px;" title="Meets University Average">&#x2713;</span>';
+      }
+    }
+
+    // Modified chart function: if fewer than 3 departments, use a bar chart instead of a radar chart.
+    function createRadarChart(ctx, data) {
+      const validDepts = Object.keys(data.values).filter(dept => !isNaN(data.values[dept]));
+      if (validDepts.length < 3) {
+         const datasetData = validDepts.map(dept => data.values[dept]);
+         return new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: validDepts,
+              datasets: [{ 
+                label: 'Current Values', 
+                data: datasetData, 
+                backgroundColor: 'rgba(79, 70, 229, 0.2)', 
+                borderColor: 'rgba(79, 70, 229, 1)', 
+                borderWidth: 1 
+              }]
+            },
+            options: {
+               scales: {
+                  y: {
+                    beginAtZero: true,
+                    max: 100
+                  }
+               }
+            }
+         });
+      } else {
+        const datasetData = validDepts.map(dept => data.values[dept]);
+        return new Chart(ctx, {
+          type: 'radar',
+          data: {
+            labels: validDepts,
+            datasets: [{ 
+              label: 'Current Values', 
+              data: datasetData, 
+              fill: true, 
+              backgroundColor: 'rgba(79, 70, 229, 0.2)', 
+              borderColor: 'rgba(79, 70, 229, 1)', 
+              pointBackgroundColor: 'rgba(79, 70, 229, 1)', 
+              pointBorderColor: '#fff', 
+              pointHoverBackgroundColor: '#fff', 
+              pointHoverBorderColor: 'rgba(79, 70, 229, 1)' 
+            }]
+          },
+          options: {
+            scales: {
+              r: {
+                beginAtZero: true,
+                max: 100
+              }
+            }
+          }
+        });
+      }
+    }
+
+    function showModal(kpiName) {
+      const modal = document.getElementById('modal');
+      const modalContent = document.getElementById('modal-content');
+      const data = kpiData[kpiName];
+      const average = calculateAverage(data.values);
+      
+      // Define description and comments, defaulting if empty.
+      const description = (data.description && data.description.trim()) ? data.description : "None Provided";
+      const comments = (data.comments && data.comments.trim()) ? data.comments : "None Provided";
+
+modalContent.innerHTML = `
+  <button class="close-btn">&times;</button>
+  <h2>${kpiName}<span class="modal-impact-badge modal-impact-${data.impact.toLowerCase()}">${getImpactSymbol(data.impact)}</span></h2>
+  <div style="margin-top: 5px; margin-bottom: 10px; color: #666;">
+    <strong>Priority Impact:</strong> ${data.impact} - Indicates the importance level for Health and Safety compliance
+  </div>
+  <p style="margin-top: 10px; color: #555;"><strong>KPI Description:</strong> ${description}</p>
+
+        <div style="margin-top: 20px;">
+          <div style="display: flex; gap: 12px; align-items: center; background-color: ${(average !== 'N/A' && data.target !== 'N/A' && (parseFloat(average) < data.target)) ? '#FEF2F2' : '#F0FDF4'}; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+            <div style="flex: 1; text-align: center;">
+              <div style="font-size: 16px; font-weight: bold;">Current Faculty Average</div>
+              <div style="font-size: 24px;">
+                ${average === 'N/A' ? average : average + '%'}
+              </div>
+            </div>
+            <div style="flex: 1; text-align: center;">
+              <div style="font-size: 16px; font-weight: bold;">Target</div>
+              <div style="font-size: 24px;">
+                ${data.target}%
+                ${(average !== 'N/A' && data.target !== 'N/A') ? (parseFloat(average) < data.target ? '<span style="color: #DC2626; margin-left: 8px;">↓</span>' : '<span style="color: #16A34A; margin-left: 8px;">↑</span>') : ''}
+              </div>
+            </div>
+            <div style="flex: 1; text-align: center;">
+              <div style="font-size: 16px; font-weight: bold;">University Average</div>
+              <div style="font-size: 24px;">
+                ${data.university_average === 'N/A' ? data.university_average : data.university_average + '%'}
+                ${(average !== 'N/A' && data.university_average !== 'N/A') ? (parseFloat(average) < data.university_average ? '<span style="color: #DC2626; margin-left: 8px;">↓</span>' : '<span style="color: #16A34A; margin-left: 8px;">↑</span>') : ''}
+              </div>
+            </div>
+            <div class="status-badge ${getStatusClass(data.status)}" style="margin-left: auto;">${data.status}</div>
+          </div>
+          <div style="display: flex; gap: 40px; margin-top: 20px;">
+            <div style="flex: 0 0 50%;">
+              <div class="chart-container" style="height: 400px;">
+                <canvas id="radar-chart"></canvas>
+              </div>
+            </div>
+            <div style="flex: 0 0 45%;">
+              <div class="department-breakdown" style="margin-top: 0; border-top: none;">
+                <h3>Department Breakdown</h3>
+                ${
+                  Object.keys(data.values).map(dept => {
+                    const rawValue = data.values[dept];
+                    let displayValue;
+                    let progressWidth = 0;
+                    let barColor = '#4F46E5';
+                    const rawLower = rawValue.toString().trim().toLowerCase();
+
+                    if (rawLower === "n/a") {
+                      displayValue = "N/A";
+                    } else if (rawLower === "no return" || rawLower === "no returns") {
+                      displayValue = "No Return";
+                      barColor = '#DC2626';
+                    } else if (!isNaN(rawValue)) {
+                      displayValue = rawValue + "%";
+                      progressWidth = rawValue;
+                    } else {
+                      displayValue = "N/A";
+                    }
+
+                    return `
+                      <div style="margin-top: 10px;">
+                        <div style="display: flex; justify-content: space-between;">
+                          <span>${dept}</span>
+                          <span>${displayValue}</span>
+                        </div>
+                        <div class="progress-bar">
+                          <div class="progress-fill" style="width: ${progressWidth}%; background-color: ${barColor};"></div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')
+                }
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+            <h3>Comments</h3>
+            <p style="color: #555;">${comments}</p>
+          </div>
+        </div>
+      `;
+
+      const ctx = document.getElementById('radar-chart').getContext('2d');
+      createRadarChart(ctx, data);
+      modal.style.display = 'block';
+
+      modal.querySelector('.close-btn').onclick = () => {
+        modal.style.display = 'none';
+      };
+    }
+
+    function renderKPICards(entries) {
+      const grid = document.getElementById('kpi-grid');
+      grid.className = currentView === 'cards' ? 'grid-container' : 'table-container';
+      grid.innerHTML = '';
+      entries.forEach(([kpiName, data]) => {
+        const average = calculateAverage(data.values);
+        const card = document.createElement('div');
+        card.className = 'kpi-card';
+        card.onclick = () => showModal(kpiName);
+        card.innerHTML = `
+          <div class="impact-badge impact-${data.impact.toLowerCase()}">${getImpactSymbol(data.impact)}</div>
+          <h3>${kpiName}</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+            <span>${average === 'N/A' ? average : average + '%'} </span>
+            <div style="display: flex; align-items: center;">
+              ${getComparisonIndicator(average, data.target)}
+              ${getUniComparisonIndicator(average, data.university_average)}
+              <span class="status-badge ${getStatusClass(data.status)}">${data.status}</span>
+            </div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${average === 'N/A' ? 0 : average + '%'}; background-color: #4F46E5;"></div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    let kpiEntries = Object.entries(kpiData);
+    kpiEntries.sort((a, b) => {
+      const avgA = parseFloat(calculateAverage(a[1].values));
+      const avgB = parseFloat(calculateAverage(b[1].values));
+      return avgB - avgA;
+    });
+    renderKPICards(kpiEntries);
+
+    let scoreSortAscending = false;
+    document.getElementById('sort-alpha').addEventListener('click', () => {
+      kpiEntries.sort((a, b) => a[0].localeCompare(b[0]));
+      renderKPICards(kpiEntries);
+    });
+    document.getElementById('sort-score').addEventListener('click', () => {
+      scoreSortAscending = !scoreSortAscending;
+      kpiEntries.sort((a, b) => {
+        const avgA = parseFloat(calculateAverage(a[1].values));
+        const avgB = parseFloat(calculateAverage(b[1].values));
+        return scoreSortAscending ? avgA - avgB : avgB - avgA;
+      });
+      renderKPICards(kpiEntries);
+    });
+
+    document.getElementById('toggle-view').addEventListener('click', () => {
+      currentView = currentView === 'cards' ? 'table' : 'cards';
+      document.getElementById('toggle-view').innerText = currentView === 'cards' ? 'Table View' : 'Card View';
+      renderKPICards(kpiEntries);
+    });
+
+    function filterKPIs(status) {
+      const filtered = kpiEntries.filter(([name, data]) => data.status.toLowerCase() === status.toLowerCase());
+      renderKPICards(filtered);
+    }
+
+    function getStatusCounts() {
+      const counts = { "on track": 0, "at risk": 0, "needs improving": 0 };
+      Object.values(kpiData).forEach(d => {
+        const s = d.status.toLowerCase();
+        if (counts[s] !== undefined) counts[s]++;
+      });
+      return counts;
+    }
+
+    const statusCounts = getStatusCounts();
+    const donutCtx = document.getElementById('status-donut-chart').getContext('2d');
+    const donutChart = new Chart(donutCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['On Track', 'At Risk', 'Needs Improving'],
+        datasets: [{ 
+          data: [
+            statusCounts['on track'],
+            statusCounts['at risk'],
+            statusCounts['needs improving']
+          ],
+          backgroundColor: ['#16A34A', '#DC2626', '#FACC15']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom'
+          }
+        },
+        onClick: (event, elements) => {
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const statusLabel = donutChart.data.labels[index];
+            filterKPIs(statusLabel);
+          } else {
+            renderKPICards(kpiEntries);
+          }
+        }
+      }
+    });
+
+    // Calculate department averages across all KPIs
+    function calculateDepartmentAverages() {
+      const departments = new Set();
+      Object.values(kpiData).forEach(kpi => {
+        Object.keys(kpi.values).forEach(dept => departments.add(dept));
+      });
+      
+      const departmentAverages = {};
+      departments.forEach(dept => {
+        let validScores = [];
+        Object.values(kpiData).forEach(kpi => {
+          const value = kpi.values[dept];
+          if (value !== undefined && !isNaN(value) && value !== "N/A" && value !== "No Return" && value !== "No Returns") {
+            validScores.push(parseFloat(value));
+          }
+        });
+        
+        if (validScores.length > 0) {
+          const avg = validScores.reduce((sum, val) => sum + val, 0) / validScores.length;
+          departmentAverages[dept] = parseFloat(avg.toFixed(1));
+        } else {
+          departmentAverages[dept] = null;
+        }
+      });
+      
+      return departmentAverages;
+    }
+
+    // Calculate faculty average across all departments and KPIs
+    function calculateFacultyAverage() {
+      let allScores = [];
+      Object.values(kpiData).forEach(kpi => {
+        Object.values(kpi.values).forEach(value => {
+          if (!isNaN(value) && value !== "N/A" && value !== "No Return" && value !== "No Returns") {
+            allScores.push(parseFloat(value));
+          }
+        });
+      });
+      
+      if (allScores.length > 0) {
+        return parseFloat((allScores.reduce((sum, val) => sum + val, 0) / allScores.length).toFixed(1));
+      }
+      return null;
+    }
+
+    const departmentAverages = calculateDepartmentAverages();
+    const facultyAverage = calculateFacultyAverage();
+
+    const deptLabels = Object.keys(departmentAverages);
+    const deptData = Object.values(departmentAverages);
+
+    let validDeptData = deptLabels.map((dept, index) => {
+      return {
+        label: dept,
+        value: deptData[index]
+      };
+    }).filter(item => item.value !== null);
+
+    // If only one valid department exists, add a dummy entry to force line drawing.
+    if (validDeptData.length === 1) {
+      validDeptData.push({ label: '', value: null });
+    }
+
+    validDeptData.sort((a, b) => b.value - a.value);
+
+    const datasets = [
+      {
+        label: 'Department Average',
+        data: validDeptData.map(item => item.value),
+        backgroundColor: 'rgba(79, 70, 229, 0.2)',
+        borderColor: 'rgba(79, 70, 229, 1)',
+        borderWidth: 1,
+        type: 'bar'
+      }
+    ];
+
+    if (facultyAverage !== null) {
+      datasets.push({
+        label: 'Faculty Average: ' + facultyAverage + '%',
+        data: validDeptData.map(() => facultyAverage),
+        borderColor: '#16A34A',
+        borderWidth: 2,
+        borderDash: [5, 5],
+        fill: false,
+        type: 'line',
+        pointRadius: 0
+      });
+    }
+
+    if (overallUniversityAverage !== "N/A") {
+      datasets.push({
+        label: 'University Average: ' + overallUniversityAverage + '%',
+        data: validDeptData.map(() => overallUniversityAverage),
+        borderColor: '#DC2626',
+        borderWidth: 2,
+        borderDash: [5, 5],
+        fill: false,
+        type: 'line',
+        pointRadius: 0
+      });
+    }
+
+    if (validDeptData.length > 0) {
+      const barCtx = document.getElementById('score-bar-chart').getContext('2d');
+      const departmentBarChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: validDeptData.map(item => item.label),
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top' },
+            title: {
+              display: true,
+              text: 'Department Average KPI Scores'
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (context.parsed.y !== null) {
+                    if (!label.includes('%')) {
+                      label += ': ' + context.parsed.y + '%';
+                    }
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
+            y: { 
+              beginAtZero: true, 
+              max: 100,
+              title: {
+                display: true,
+                text: 'Average Score (%)'
+              }
+            },
+            x: {
+              ticks: {
+                autoSkip: false,
+                maxRotation: 60,
+                minRotation: 60
+              }
+            }
+          }
+        }
+      });
+    } else {
+      document.getElementById('score-bar-chart').parentNode.innerHTML += '<p style="text-align:center; color:#666;">No valid department scores available.</p>';
+    }
+
+    window.onclick = (event) => {
+      const modal = document.getElementById('modal');
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    };
+  </script>
+</body>
+</html>
